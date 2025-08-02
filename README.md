@@ -22,25 +22,29 @@
 ```bash
 curl -O https://raw.githubusercontent.com/cyanskye/chatgpt-pro/main/compress-renew.sh
 chmod +x compress-renew.sh
+```
 
 2. 开始压缩
+
 ```bash
 ./compress-renew.sh /路径/到/你的视频文件夹
+```
 
 压缩完成后，文件将以 _compressed.mp4 命名保存在同目录下。
 
 🖥️ 环境要求
 
 请确保系统已安装：
-	•	bash
-	•	ffmpeg（如未安装，可通过 Homebrew 安装）
+• bash
+• ffmpeg（如未安装，可通过 Homebrew 安装）
 
 ```bash
 brew install ffmpeg
+```
 
 📺 示例演示
-•	🌐 GitHub Pages 使用文档：👉 点击查看
-•	📬 公众号文章讲解：👉 《compress-renew.sh 用 AI 思维压缩视频文件》🔗 阅读原文
+•🌐 GitHub Pages 使用文档：👉 点击查看
+•📬 公众号文章讲解：👉 《compress-renew.sh 用 AI 思维压缩视频文件》🔗 阅读原文
 
 ☕ 支持开发者
 
@@ -58,6 +62,6 @@ brew install ffmpeg
 本项目采用 MIT License 开源协议，欢迎自由使用与二次开发。
 
 📌 联系作者
-	•	GitHub: cyanskye
-	•	微信公众号：神奇桑桑流量思维
-	•	Email：magicsang666@gmail.com
+GitHub: cyanskye
+微信公众号：神奇桑桑流量思维
+Email：magicsang666@gmail.com
