@@ -12,7 +12,7 @@ title: compress-renew.sh - 视频压缩自动化脚本
 ## 🚀 快速开始
 
 ```bash
-curl -O https://raw.githubusercontent.com/cyanskye/chatgpt-pro/main/compress-renew.sh
+curl -O https://raw.githubusercontent.com/cyanskye/video-compression/main/compress-renew.sh
 chmod +x compress-renew.sh
 ./compress-renew.sh /path/to/your/videos
 ```
@@ -22,8 +22,8 @@ chmod +x compress-renew.sh
 基于 FFmpeg 自动转码，封装常规参数，支持批量文件处理。命名自动识别，安全不覆盖原视频。
 
 ☕ 支持我继续开发
-微信号：神奇桑桑
-![视频压缩工具脚本费](https://github.com/user-attachments/assets/c2e30e34-aa4e-442f-b8b5-85054804fac2)
+- 微信号：神奇桑桑（ MagicSang666 ）
+<img src="https://github.com/user-attachments/assets/c2e30e34-aa4e-442f-b8b5-85054804fac2" alt="视频压缩工具脚本费" width="400"/>
 
 
 🧾 License
