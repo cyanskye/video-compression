@@ -51,7 +51,7 @@ brew install ffmpeg
 
 微信赞助
 
-![视频压缩工具脚本费](https://github.com/user-attachments/assets/2f9aa9f8-2247-4ab5-8bdc-4ecc692f793a)
+<img src="https://github.com/user-attachments/assets/c2e30e34-aa4e-442f-b8b5-85054804fac2" alt="视频压缩工具脚本费" width="400"/>
 
 
 微信号：神奇桑桑
