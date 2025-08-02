@@ -20,7 +20,7 @@
 ### 1. 下载脚本
 
 ```bash
-curl -O https://raw.githubusercontent.com/cyanskye/chatgpt-pro/main/compress-renew.sh
+curl -O https://raw.githubusercontent.com/cyanskye/video-compression/main/compress-renew.sh
 chmod +x compress-renew.sh
 ```
 
@@ -45,7 +45,6 @@ brew install ffmpeg
 📺 示例演示
 •🌐 GitHub Pages 使用文档：👉 点击查看
 •📬 公众号文章讲解：👉 《compress-renew.sh 用 AI 思维压缩视频文件》🔗 阅读原文
-
 ☕ 支持开发者
 
 如果这个项目帮到了你，欢迎请我喝一杯咖啡 ☕～
@@ -62,6 +61,6 @@ brew install ffmpeg
 本项目采用 MIT License 开源协议，欢迎自由使用与二次开发。
 
 📌 联系作者
-GitHub: cyanskye
-微信公众号：神奇桑桑流量思维
-Email：magicsang666@gmail.com
+- GitHub: cyanskye
+- 微信公众号：神奇桑桑流量思维
+- Email：magicsang666@gmail.com
