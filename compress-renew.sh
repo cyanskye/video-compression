@@ -1,28 +1,155 @@
 #!/bin/bash
-# ----------------------------
-# 授权校验模块 by 神奇桑桑
-# ----------------------------
-USER_ID="cyanskye"
-AUTH_URL="https://gist.githubusercontent.com/cyanskye/GIST_ID_PLACEHOLDER/raw/auth.json"
+# ======================================================
+# 安全声明 / Security Notice
+# ======================================================
+# 本脚本完全在本地运行，具有以下安全特性：
+# - 不联网：无需网络连接，所有操作均在本地完成
+# - 不删除：只生成压缩文件，原始文件完整保留
+# - 不上传：视频文件不会被上传到任何服务器
+# - 开源透明：代码逻辑清晰可审计
+#
+# 作者：神奇桑桑 | 微信公众号：神奇桑桑流量思维
+# ======================================================
 
-echo "🔒 正在联网校验使用授权..."
-auth_list=$(curl -s "$AUTH_URL")
-if [[ $? -ne 0 || -z "$auth_list" ]]; then
-  echo "⚠️ 无法获取授权名单，请检查网络或联系神奇桑桑。"
-  exit 1
+# ----------------------------
+# 激活码校验模块 by 神奇桑桑
+# ----------------------------
+VALID_CODE="magicagi2026"
+LICENSE_FILE="$HOME/.compress_license"
+
+# 转换为小写进行比较（不区分大小写）
+to_lower() {
+  echo "$1" | tr '[:upper:]' '[:lower:]'
+}
+
+# 检查是否已激活
+if [ -f "$LICENSE_FILE" ]; then
+  saved_code=$(cat "$LICENSE_FILE")
+  if [ "$(to_lower "$saved_code")" == "$VALID_CODE" ]; then
+    echo "✅ 授权验证成功，欢迎使用！"
+  else
+    rm -f "$LICENSE_FILE"
+    echo "❌ 授权已失效，请重新输入激活码。"
+    read -p "请输入激活码: " input_code
+    if [ "$(to_lower "$input_code")" == "$VALID_CODE" ]; then
+      echo "$input_code" > "$LICENSE_FILE"
+      echo "✅ 激活成功！"
+    else
+      echo "❌ 激活码错误"
+      echo "   激活码获取方式，请联系作者：神奇桑桑 magicsang666"
+      exit 1
+    fi
+  fi
+else
+  echo "=========================================="
+  echo "🎬 视频批量压缩工具 - 首次使用"
+  echo "=========================================="
+  echo ""
+  echo "📋 安全声明："
+  echo "   • 本脚本完全在本地运行，不联网"
+  echo "   • 不会删除您的原始文件"
+  echo "   • 不会上传任何数据"
+  echo ""
+  read -p "请输入激活码: " input_code
+  if [ "$(to_lower "$input_code")" == "$VALID_CODE" ]; then
+    echo "$input_code" > "$LICENSE_FILE"
+    echo "✅ 激活成功！感谢您的支持！"
+  else
+    echo "❌ 激活码错误"
+    echo "   激活码获取方式，请联系作者：神奇桑桑 magicsang666"
+    exit 1
+  fi
 fi
 
-if ! echo "$auth_list" | grep -q "\"${USER_ID}\""; then
-  echo "❌ 抱歉，GitHub 用户 $USER_ID 未在授权名单中。请扫码付款后联系神奇桑桑添加授权。"
-  exit 1
+# ======================================================
+# 运行环境自检
+# ======================================================
+echo ""
+echo "=========================================="
+echo "🔍 运行环境自检"
+echo "=========================================="
+
+env_check_passed=true
+
+# 检查 ffmpeg
+echo -n "   ffmpeg .............. "
+if command -v ffmpeg &> /dev/null; then
+  ffmpeg_version=$(ffmpeg -version 2>/dev/null | head -1 | awk '{print $3}')
+  echo "✅ 已安装 (v$ffmpeg_version)"
+else
+  echo "❌ 未安装"
+  echo "   💡 请先安装 ffmpeg: brew install ffmpeg"
+  env_check_passed=false
 fi
 
-echo "✅ 授权校验成功，继续执行压缩脚本。"
+# 检查 ffprobe
+echo -n "   ffprobe ............. "
+if command -v ffprobe &> /dev/null; then
+  echo "✅ 已安装"
+else
+  echo "❌ 未安装"
+  env_check_passed=false
+fi
 
+# 检查操作系统
+echo -n "   操作系统 ............ "
+os_name=$(uname -s)
+if [ "$os_name" == "Darwin" ]; then
+  macos_version=$(sw_vers -productVersion 2>/dev/null || echo "未知")
+  echo "✅ macOS $macos_version"
+else
+  echo "⚠️ $os_name (推荐 macOS)"
+fi
 
-#!/bin/bash
+# 检查内存
+echo -n "   系统内存 ............ "
+if [ "$os_name" == "Darwin" ]; then
+  memory_bytes=$(sysctl -n hw.memsize 2>/dev/null || echo "0")
+  memory_gb=$((memory_bytes / 1024 / 1024 / 1024))
+  if [ $memory_gb -ge 4 ]; then
+    echo "✅ ${memory_gb}GB"
+  elif [ $memory_gb -ge 2 ]; then
+    echo "⚠️ ${memory_gb}GB (建议 4GB 以上)"
+  else
+    echo "❌ ${memory_gb}GB (不足 2GB)"
+    env_check_passed=false
+  fi
+else
+  echo "⚠️ 无法检测"
+fi
 
-#!/bin/bash
+# 检查磁盘空间
+echo -n "   磁盘可用空间 ........ "
+free_space_kb=$(df -k . 2>/dev/null | tail -1 | awk '{print $4}')
+free_space_gb=$((free_space_kb / 1024 / 1024))
+if [ $free_space_kb -gt 10485760 ]; then  # > 10GB
+  echo "✅ ${free_space_gb}GB"
+elif [ $free_space_kb -gt 1048576 ]; then  # > 1GB
+  echo "⚠️ ${free_space_gb}GB (建议 10GB 以上)"
+else
+  echo "❌ 不足 1GB"
+  env_check_passed=false
+fi
+
+# 检查写入权限
+echo -n "   目录写入权限 ........ "
+if [ -w "." ]; then
+  echo "✅ 正常"
+else
+  echo "❌ 无写入权限"
+  env_check_passed=false
+fi
+
+echo "------------------------------------------"
+
+if [ "$env_check_passed" = false ]; then
+  echo "❌ 环境检测未通过，请解决上述问题后重试。"
+  exit 1
+else
+  echo "✅ 环境检测通过！"
+fi
+
+echo ""
 # ======================================================
 # 项目: 视频批量压缩工具
 # 作者: 神奇桑桑 (思路提供), ChatGPT & TRAE (代码实现)
