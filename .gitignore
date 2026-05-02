@@ -1,0 +1,19 @@
+# 运行时产物
+compress_log_*.txt
+compress_progress.txt
+compressed/
+
+# 营销文稿（不属于代码库）
+promotion-*.md
+seo-*.md
+wechat-article.md
+MARKETING-FILES-INDEX.md
+QUICK-START.md
+课程视频清单.md
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc

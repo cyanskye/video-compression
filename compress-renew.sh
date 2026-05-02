@@ -11,55 +11,33 @@
 # 作者：神奇桑桑 | 微信公众号：神奇桑桑流量思维
 # ======================================================
 
-# ----------------------------
-# 激活码校验模块 by 神奇桑桑
-# ----------------------------
-VALID_CODE="magicagi2026"
-LICENSE_FILE="$HOME/.compress_license"
+echo "=========================================="
+echo "🎬 视频批量压缩工具"
+echo "=========================================="
+echo ""
+echo "📋 安全声明："
+echo "   • 本脚本完全在本地运行，不联网"
+echo "   • 不会删除您的原始文件"
+echo "   • 不会上传任何数据"
+echo ""
 
-# 转换为小写进行比较（不区分大小写）
-to_lower() {
-  echo "$1" | tr '[:upper:]' '[:lower:]'
-}
-
-# 检查是否已激活
-if [ -f "$LICENSE_FILE" ]; then
-  saved_code=$(cat "$LICENSE_FILE")
-  if [ "$(to_lower "$saved_code")" == "$VALID_CODE" ]; then
-    echo "✅ 授权验证成功，欢迎使用！"
-  else
-    rm -f "$LICENSE_FILE"
-    echo "❌ 授权已失效，请重新输入激活码。"
-    read -p "请输入激活码: " input_code
-    if [ "$(to_lower "$input_code")" == "$VALID_CODE" ]; then
-      echo "$input_code" > "$LICENSE_FILE"
-      echo "✅ 激活成功！"
-    else
-      echo "❌ 激活码错误"
-      echo "   激活码获取方式，请联系作者：神奇桑桑 magicsang666"
-      exit 1
-    fi
+# 参数解析：支持 --no-confirm / --crf <值> / 文件/目录路径（顺序不限）
+NO_CONFIRM=false
+CRF=23
+TARGET_PATH=""
+NEXT_IS_CRF=false
+for arg in "$@"; do
+  if [ "$arg" == "--no-confirm" ]; then
+    NO_CONFIRM=true
+  elif [ "$arg" == "--crf" ]; then
+    NEXT_IS_CRF=true
+  elif [ "$NEXT_IS_CRF" == "true" ]; then
+    CRF="$arg"
+    NEXT_IS_CRF=false
+  elif [ -n "$arg" ]; then
+    TARGET_PATH="$arg"
   fi
-else
-  echo "=========================================="
-  echo "🎬 视频批量压缩工具 - 首次使用"
-  echo "=========================================="
-  echo ""
-  echo "📋 安全声明："
-  echo "   • 本脚本完全在本地运行，不联网"
-  echo "   • 不会删除您的原始文件"
-  echo "   • 不会上传任何数据"
-  echo ""
-  read -p "请输入激活码: " input_code
-  if [ "$(to_lower "$input_code")" == "$VALID_CODE" ]; then
-    echo "$input_code" > "$LICENSE_FILE"
-    echo "✅ 激活成功！感谢您的支持！"
-  else
-    echo "❌ 激活码错误"
-    echo "   激活码获取方式，请联系作者：神奇桑桑 magicsang666"
-    exit 1
-  fi
-fi
+done
 
 # ======================================================
 # 运行环境自检
@@ -177,14 +155,19 @@ echo ""
 # ======================================================
 # 目录和文件定义
 # ======================================================
-# 定义输出目录和创建
-OUTPUT_DIR="./compressed"
+# 输出目录基于目标路径，而非脚本当前工作目录
+if [ -n "$TARGET_PATH" ] && [ -d "$TARGET_PATH" ]; then
+  BASE_DIR=$(realpath "$TARGET_PATH")
+elif [ -n "$TARGET_PATH" ] && [ -f "$TARGET_PATH" ]; then
+  BASE_DIR=$(realpath "$(dirname "$TARGET_PATH")")
+else
+  BASE_DIR=$(realpath ".")
+fi
+OUTPUT_DIR="$BASE_DIR/compressed"
 mkdir -p "$OUTPUT_DIR"
 
 # 防止无限循环压缩 - 排除输出目录
-EXCLUDE_DIR="./compressed"
-# 确保排除目录的路径格式正确
-EXCLUDE_DIR=$(realpath "$EXCLUDE_DIR")
+EXCLUDE_DIR="$OUTPUT_DIR"
 
 
 
@@ -258,14 +241,28 @@ echo "------------------------------------------" | tee -a "$log_file"
 # 修复空格/中文路径处理
 export LC_ALL=en_US.UTF-8
 
-# 收集所有视频文件路径到数组 - 排除压缩目录
+# 收集视频文件：单文件 / 指定目录 / 当前目录
 video_files=()
-while IFS= read -r -d '' file; do
-  # 确保只处理当前目录下的视频文件，不包括子目录中的compressed目录
-  if [[ $(realpath "$file") != *"$EXCLUDE_DIR"* ]]; then
-    video_files+=("$file")
-  fi
-done < <(LC_ALL=en_US.UTF-8 find . -type f \( -iname "*.mp4" -o -iname "*.mov" -o -iname "*.mkv" \) -print0)
+if [ -n "$TARGET_PATH" ] && [ -f "$TARGET_PATH" ]; then
+  # 单文件模式
+  echo "📄 单文件模式: $TARGET_PATH"
+  video_files=("$TARGET_PATH")
+elif [ -n "$TARGET_PATH" ] && [ -d "$TARGET_PATH" ]; then
+  # 指定目录模式
+  echo "📁 目录模式: $TARGET_PATH"
+  while IFS= read -r -d '' file; do
+    if [[ $(realpath "$file") != *"$EXCLUDE_DIR"* ]]; then
+      video_files+=("$file")
+    fi
+  done < <(LC_ALL=en_US.UTF-8 find "$TARGET_PATH" -type f \( -iname "*.mp4" -o -iname "*.mov" -o -iname "*.mkv" \) -print0)
+elif [ -n "$TARGET_PATH" ]; then
+  echo "❌ 错误: 路径不存在或不可访问: $TARGET_PATH"
+  exit 1
+else
+  echo "❌ 错误: 请指定视频目录路径"
+  echo "   用法: bash compress-renew.sh /path/to/视频目录"
+  exit 1
+fi
 
 # 收集所有封面文件路径到数组
 cover_files=()
@@ -294,7 +291,7 @@ total_estimated_fmt=$(printf '%02d:%02d:%02d' $((total_estimated_time/3600)) $((
 # 用户交互和系统检查
 # ======================================================
 # 检查是否需要跳过确认框
-if [ "$1" != "--no-confirm" ]; then
+if [ "$NO_CONFIRM" != true ]; then
   # 交互逻辑 - 询问用户是否需要压缩
   clear
    echo "=========================================="
@@ -415,11 +412,15 @@ for file in "${video_files[@]}"; do
   # 增加计数器
   counter=$((counter+1))
   filename=$(basename "$file")
-  filepath=$(dirname "$file")
-  relpath="${filepath#./}"
-  # 防止递归创建压缩目录
-  relpath=$(echo "$relpath" | sed 's|^'"$EXCLUDE_DIR"'||')
-  output_subdir="$OUTPUT_DIR/$relpath"
+  filepath=$(realpath "$(dirname "$file")")
+  # 计算相对于 BASE_DIR 的路径，输出到 BASE_DIR/compressed/<relpath>/
+  relpath="${filepath#$BASE_DIR}"
+  relpath="${relpath#/}"
+  if [ -n "$relpath" ]; then
+    output_subdir="$OUTPUT_DIR/$relpath"
+  else
+    output_subdir="$OUTPUT_DIR"
+  fi
   # 确保输出目录路径没有空格
   output_subdir=$(echo "$output_subdir" | tr -s ' ')
   mkdir -p "$output_subdir"
@@ -489,7 +490,7 @@ for file in "${video_files[@]}"; do
   # 保留错误输出到日志文件
   ffmpeg -y -hide_banner -i "$file" \
     -vf "scale=1920:1080" \
-    -c:v libx264 -preset medium -crf 23 -threads 0 \
+    -c:v libx264 -preset veryfast -crf $CRF -threads 0 \
     -c:a aac -b:a 160k -ac 1 \
     -progress pipe:1 \
     "$output_file" 2>> "$log_file" | while read line; do
@@ -500,18 +501,22 @@ for file in "${video_files[@]}"; do
       fps=$(echo $line | cut -d'=' -f2)
     elif [[ $line == out_time=* ]]; then
       out_time=$(echo $line | cut -d'=' -f2)
-      # 计算单个视频进度
-      video_progress=$(echo "$out_time" | cut -d':' -f3 | cut -d'.' -f1)
-      # 检查video_progress是否为数字
-      if [[ $video_progress =~ ^[0-9]+$ ]]; then
-        # 确保将video_progress解释为十进制数
-        video_progress=$((10#$video_progress * 100 / duration_int))
+      # 将 HH:MM:SS.xxx 转换为总秒数再计算进度
+      h=$(echo "$out_time" | cut -d':' -f1)
+      m=$(echo "$out_time" | cut -d':' -f2)
+      s=$(echo "$out_time" | cut -d':' -f3 | cut -d'.' -f1)
+      if [[ $h =~ ^[0-9]+$ ]] && [[ $m =~ ^[0-9]+$ ]] && [[ $s =~ ^[0-9]+$ ]]; then
+        current_sec=$((10#$h * 3600 + 10#$m * 60 + 10#$s))
+        if [ $duration_int -gt 0 ]; then
+          video_progress=$((current_sec * 100 / duration_int))
+        else
+          video_progress=0
+        fi
       else
-        # 非数字则设为0
         video_progress=0
       fi
-      # 显示单个视频进度
-      echo -ne "\r🔄 视频压缩进度: $video_progress%" 
+      # 显示单个视频进度（末尾空格清除残留字符）
+      echo -ne "\r🔄 视频压缩进度: $video_progress%   "
     fi
   done
 
