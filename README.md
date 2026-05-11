@@ -1,103 +1,99 @@
-# compress-renew.sh
+# 本地视频压缩 Agent
 
-一个用于 **批量压缩视频文件** 的 Shell 脚本 + 浏览器 GUI 预览工具，支持文件夹内所有视频的自动压缩和转码，适用于 Mac / Linux 环境。
+一个本地运行的视频压缩工具：先分析视频目录，给出智能压缩建议和真实预览，再批量压缩到 `compressed/`。视频不会上传，所有分析、抽帧、压缩都在你的电脑上完成。
 
-由 [神奇桑桑](https://github.com/cyanskye) 开发，适用于短视频工作者、内容创作者、团队协作等多种场景。
+适合课程视频、小鹅通素材、短视频批量交付前的体积优化。
 
----
+## 核心能力
 
-## 🧰 核心功能
+- 扫描 `.mp4` / `.mov` / `.mkv` / `.m4v`
+- 自动排除 `compressed/`，避免循环压缩
+- 基于分辨率、码率、时长、文件大小、字幕/文字风险给出本地智能推荐
+- 浏览器本地 Agent：目录概览、推荐理由、风险提示、真实 CRF 预览、实时进度
+- 压缩结果保持子目录结构，输出到 `<视频目录>/compressed/`
+- 生成 `compressed/课程视频清单.md`
+- 保留旧 Shell 入口：`compress-renew.sh` 仍然可用
 
-- 批量压缩 `.mp4` / `.mov` / `.mkv` 视频文件
-- 压缩文件保存到 `视频目录/compressed/` 子文件夹，原文件不动
-- 支持 `--crf` 参数调节压缩质量（数值越大文件越小）
-- 浏览器 GUI 预览三档压缩效果，选完直接开压
+## 使用方式（CLI first）
 
----
-
-## 🚀 使用方式
-
-### 方式一：CLI 直接压缩
-
-```bash
-# 下载脚本
-curl -O https://raw.githubusercontent.com/cyanskye/video-compression/main/compress-renew.sh
-chmod +x compress-renew.sh
-
-# 默认质量（CRF 23）压缩
-bash compress-renew.sh /路径/到/你的视频文件夹
-
-# 指定 CRF 质量
-bash compress-renew.sh --crf 28 /路径/到/你的视频文件夹
-
-# 跳过确认提示（批处理用）
-bash compress-renew.sh --crf 28 --no-confirm /路径/到/你的视频文件夹
-```
-
-压缩完成后，文件保存在 `/路径/到/你的视频文件夹/compressed/` 目录内，文件名不变。
-
-### 方式二：GUI 预览选档后压缩
+### 1) 一键检查依赖
 
 ```bash
-# 安装依赖（仅需一次）
-pip3 install flask pillow
-
-# 启动 GUI
-python3 compress-gui.py /路径/到/你的视频文件夹
+./compress-renew.sh --doctor
 ```
 
-浏览器自动打开，展示四档对比（原版 / 画质优先 / 均衡 / 体积优先），点击图片可全屏查看，选好后点击"开始压缩"。
+### 2) 先预检（不执行压缩）
 
-### CRF 参数参考
+```bash
+./compress-renew.sh --dry-run /路径/到/视频目录
+```
 
-| 档位 | CRF 值 | 说明 |
-|------|--------|------|
-| 画质优先 | 18 | 最清晰，文件较大 |
-| 均衡（默认） | 23 | 画质与体积平衡 |
-| 体积优先 | 28 | 文件较小，画质略降 |
+### 3) 执行压缩（默认会确认）
 
----
+```bash
+./compress-renew.sh /路径/到/视频目录
+./compress-renew.sh --crf 20 /路径/到/视频目录
+```
 
-## 🖥️ 环境要求
+### 4) 自动化批处理（跳过确认）
 
-- bash
-- ffmpeg（未安装可通过 Homebrew 安装）
-- Python 3（GUI 模式需要）
+```bash
+./compress-renew.sh --crf 23 --yes /路径/到/视频目录
+```
+
+> 输出目录固定为：`<视频目录>/compressed/`
+
+## 高级命令（可选）
+
+```bash
+python3 video_agent.py analyze /路径/到/视频目录
+python3 video_agent.py compress /路径/到/视频目录 --crf 23 --no-confirm
+python3 video_agent.py app /路径/到/视频目录
+python3 compress-gui.py /路径/到/视频目录
+```
+
+## 压缩档位
+
+| 档位 | CRF | 适合场景 |
+|---|---:|---|
+| 近原画 | 18 | 字幕、课件、录屏、小字号文字较多 |
+| 课程清晰 | 20 | 课程视频默认推荐，优先保住文字和人脸 |
+| 均衡压缩 | 23 | 普通真人视频，小字少时可用 |
+| 强力省空间 | 28 | 明显减小体积，接受压缩感 |
+
+## 环境要求
+
+- macOS / Linux
+- Python 3
+- ffmpeg / ffprobe
+
+安装 ffmpeg：
 
 ```bash
 brew install ffmpeg
-pip3 install flask pillow
 ```
 
----
+不需要 Flask、Pillow 或 tkinter。
 
-## 📺 示例演示
+## 隐私边界
 
-- 🌐 GitHub Pages 使用文档：👉 [点击查看](https://cyanskye.github.io/video-compression/)
-- 📬 公众号文章讲解：👉 《compress-renew.sh 用 AI 思维压缩视频文件》
+- 不上传视频
+- 不调用云端 AI
+- 不联网即可完成分析和压缩
+- 浏览器页面只监听 `127.0.0.1`，用于本机操作
 
----
+## 给 AI 协作者使用
 
-## ☕ 支持开发者
+仓库内提供了 `skills/video-compression-advisor/SKILL.md`。把它安装或复制到 Codex Skills 后，AI 可以稳定执行这套流程：
 
-如果这个项目帮到了你，欢迎请我喝一杯咖啡 ☕～
+1. 先分析目录
+2. 解释推荐档位
+3. 生成预览或启动本地 Agent
+4. 用户确认后再压缩
+5. 检查报告和失败文件
 
-微信赞助
+Skills 适合作为 AI 工作流说明；普通用户仍建议使用 `video_agent.py app`。
 
-<img src="https://github.com/user-attachments/assets/c2e30e34-aa4e-442f-b8b5-85054804fac2" alt="视频压缩工具脚本费" width="400"/>
+## License
 
-微信号：神奇桑桑
-
----
-
-## 📜 License
-
-本项目采用 MIT License 开源协议，欢迎自由使用与二次开发。
-
----
-
-## 📌 联系作者
-
-- GitHub: [cyanskye](https://github.com/cyanskye)
-- 微信公众号：神奇桑桑流量思维
-- Email：magicsang666@gmail.com
+MIT
